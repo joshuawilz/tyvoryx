@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYVORYX | Enterprise Cloud Orchestration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#2563EB',
+                        brandHover: '#1D4ED8',
+                        darkBg: '#0B0F14',
+                        darkCard: '#12171E',
+                        lightBg: '#F8FAFC',
+                        lightCard: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'Roboto Mono', monospace; }
+        .terminal-cursor::after { content: '_'; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #1C232D; border-radius: 10px; }
+        .light ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        .module-view { display: none; }
+        .module-view.active { display: block; }
+    </style>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('tyvoryx-theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+</head>
+<body class="min-h-screen bg-lightBg text-slate-900 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 flex flex-col justify-between overflow-x-hidden">
+
+    <header class="sticky top-0 z-40 w-full bg-white/90 dark:bg-darkBg/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-900/80 transition-colors duration-200">
+        <div class="w-full max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            
+            <div class="flex items-center cursor-pointer" onclick="navigateTo('home')">
+                <svg class="h-8 w-auto" viewBox="0 0 240 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="translate(0, 2)">
+                        <path d="M5 10H17L26 25L17 40H5L14 25L5 10Z" fill="#2563EB"/>
+                        <path d="M41 10H29L20 25L29 40H41L32 25L41 10Z" fill="#F8FAFC"/>
+                    </g>
+                    <text x="54" y="35" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="28" fill="#F8FAFC" letter-spacing="0.5" class="fill-slate-900 dark:fill-white">TYVORY</text>
+                    <g transform="translate(169, 13)">
+                        <path d="M2 22 L20 2" stroke="#2563EB" stroke-width="6" stroke-linecap="square"/>
+                        <path d="M2 2 L7 7" stroke="#2563EB" stroke-width="6" stroke-linecap="square"/>
+                        <path d="M15 15 L20 20" stroke="#2563EB" stroke-width="6" stroke-linecap="square"/>
+                    </g>
+                </svg>
+            </div>
+
+            <nav class="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-widest mono">
+                <button onclick="navigateTo('home')" data-nav="home" data-i18n="nav_home" class="nav-link text-brand transition">Overview</button>
+                <button onclick="navigateTo('capabilities')" data-nav="capabilities" data-i18n="nav_capabilities" class="nav-link text-slate-400 hover:text-brand transition">Capabilities</button>
+                <button onclick="navigateTo('secteurs')" data-nav="secteurs" data-i18n="nav_sectors" class="nav-link text-slate-400 hover:text-brand transition">Sectors</button>
+                <button onclick="navigateTo('about')" data-nav="about" data-i18n="nav_manifesto" class="nav-link text-slate-400 hover:text-brand transition">Manifesto</button>
+                <button onclick="navigateTo('faq')" data-nav="faq" data-i18n="nav_faq" class="nav-link text-slate-400 hover:text-brand transition">Security FAQ</button>
+            </nav>
+
+            <div class="flex items-center gap-4">
+                
+                <div class="relative inline-block text-left">
+                    <button onclick="toggleLanguageMenuEngine(event)" id="lang-menu-btn" class="text-[10px] text-slate-700 dark:text-slate-400 font-bold uppercase mono border border-slate-300 dark:border-slate-800 px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-900/40 flex items-center gap-1.5 hover:border-brand transition select-none">
+                        <span id="active-lang-label">EN</span>
+                        <svg class="w-2.5 h-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="lang-dropdown-box" class="absolute right-0 mt-1 w-44 rounded bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800/80 shadow-2xl hidden z-50 mono text-[11px]">
+                        <div class="py-1">
+                            <button onclick="switchLanguageEngine('EN')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">English (EN)</button>
+                            <button onclick="switchLanguageEngine('FR')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">Français (FR)</button>
+                            <button onclick="switchLanguageEngine('DE')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">Deutsch (DE)</button>
+                            <button onclick="switchLanguageEngine('ZH')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">中文 (ZH)</button>
+                            <button onclick="switchLanguageEngine('ES')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">Español (ES)</button>
+                            <button onclick="switchLanguageEngine('JA')" class="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition font-medium">日本語 (JA)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="toggleThemeEngine()" class="p-2 rounded border border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 hover:text-brand transition">
+                    <svg id="sun-icon" class="w-3.5 h-3.5 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"></path></svg>
+                    <svg id="moon-icon" class="w-3.5 h-3.5 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+                </button>
+
+                <button onclick="toggleDrawerEngine('drawer-billing')" data-i18n="nav_cta" class="hidden sm:inline-block text-[11px] bg-brand hover:bg-brandHover text-white px-4 py-2 rounded font-bold transition tracking-widest uppercase mono shadow-lg shadow-brand/10">
+                    Deploy Core Wallet
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <section id="view-home" class="module-view active w-full max-w-7xl mx-auto px-6 py-16 md:py-24">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center mb-28">
+                <div class="lg:col-span-7 flex flex-col justify-center">
+                    <p id="hero-meta" class="text-[11px] font-bold uppercase tracking-widest text-brand mb-4 mono">// ECOSYSTEM REGION: GLOBAL_EDGE // PARITY: 100%</p>
+                    <h1 data-i18n="hero_title" class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none mb-6 text-slate-900 dark:text-white">
+                        Virtual Infrastructures.<br><span class="text-slate-400 dark:text-slate-500">Automated. Zero Drift.</span>
+                    </h1>
+                    <p data-i18n="hero_desc" class="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-2xl mb-8 leading-relaxed">
+                        TYVORYX orchestrates the critical application layer of large organizations. We enforce strict secure containment, eliminate environment drift, and execute your Supabase financial mutations in real time.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="scrollToSection('intake-anchor')" data-i18n="hero_btn_main" class="bg-brand hover:bg-brandHover text-white font-bold px-8 py-4 rounded text-xs transition tracking-widest uppercase mono shadow-xl shadow-brand/20">Initialize Zero-Trust Wizard →</button>
+                        <button onclick="navigateTo('capabilities')" data-i18n="hero_btn_sec" class="bg-slate-200/50 dark:bg-slate-900/40 hover:bg-slate-200 dark:hover:bg-slate-900 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-800 format-btn font-bold px-6 py-4 rounded text-xs transition uppercase mono">Explore Capabilities</button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 bg-slate-50 dark:bg-darkCard rounded-xl p-6 mono text-[11px] border border-slate-200 dark:border-slate-900/60 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-[2px] bg-brand"></div>
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4">
+                        <div class="flex gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-500/80"></span>
+                            <span class="w-2 h-2 rounded-full bg-yellow-500/80"></span>
+                            <span class="w-2 h-2 rounded-full bg-green-500/80"></span>
+                        </div>
+                        <span class="text-slate-400 dark:text-slate-600 text-[9px] uppercase font-bold tracking-wider">// core-telemetry_node_01</span>
+                    </div>
+                    <div class="space-y-2 text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <p class="text-slate-400 dark:text-slate-600">// Connection protocol verification checks...</p>
+                        <p><span class="text-brand">➔</span> tyvoryx-fabric --verify-parity</p>
+                        <p class="text-emerald-600 dark:text-emerald-500 font-medium">[OK] No environment state configuration drift detected.</p>
+                        <p><span class="text-brand">➔</span> supabase rpc --call=process_daily_roi</p>
+                        <p class="text-slate-400 dark:text-slate-500">Filtering structural user table context via unique phone ID...</p>
+                        <p class="text-green-600 dark:text-green-400 font-bold">[RLS ENFORCED] Rows secured. Computation mutated in 0.38ms.</p>
+                        <p><span class="text-brand">➔</span> docker sandbox --status</p>
+                        <p class="text-blue-500">[ISOLATION] Hermetic memory execution sandbox active.</p>
+                        <p class="text-slate-900 dark:text-white font-bold bg-slate-200/60 dark:bg-slate-900 px-2.5 py-1 rounded inline-block mt-1">Contractual SLA: 99.999% Enforced</p>
+                        <p class="text-slate-400 dark:text-slate-600 pt-1 terminal-cursor font-bold">root@tyvoryx_core:~#</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="intake-anchor" class="mt-28 border-t border-slate-200 dark:border-slate-900 pt-20">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <p class="text-[10px] font-bold text-brand uppercase tracking-widest mb-2 mono">// VALUATION ENGINE & RISK SYSTEMS</p>
+                    <h2 data-i18n="audit_title" class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Calculate Infrastructure Drift & Waste</h2>
+                    <p data-i18n="audit_subtitle" class="text-slate-500 dark:text-slate-400 text-xs mt-3 leading-relaxed">Adjust your metrics in real-time to visualize capital leaks caused by container misconfigurations and unprotected database clusters.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
+                    <div class="lg:col-span-6 bg-slate-50 dark:bg-darkCard p-8 rounded-xl border border-slate-200 dark:border-slate-900/60 space-y-6 mono text-[11px]">
+                        <div>
+                            <div class="flex justify-between font-bold mb-2 uppercase text-slate-400 dark:text-slate-500">
+                                <span>// Active Docker Containers</span>
+                                <span class="text-brand font-mono text-xs" id="val-containers">120</span>
+                            </div>
+                            <input type="range" min="10" max="500" value="120" id="slide-containers" oninput="updateWasteSimulatorEngine()" class="w-full accent-brand bg-slate-200 dark:bg-slate-900 h-1 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-bold mb-2 uppercase text-slate-400 dark:text-slate-500">
+                                <span>// Monthly Supabase Mutations</span>
+                                <span class="text-brand font-mono text-xs" id="val-mutations">25M</span>
+                            </div>
+                            <input type="range" min="1" max="100" value="25" id="slide-mutations" oninput="updateWasteSimulatorEngine()" class="w-full accent-brand bg-slate-200 dark:bg-slate-900 h-1 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-bold mb-2 uppercase text-slate-400 dark:text-slate-500">
+                                <span>// System Drift Tolerance</span>
+                                <span class="text-brand font-mono text-xs" id="val-drift">34%</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="34" id="slide-drift" oninput="updateWasteSimulatorEngine()" class="w-full accent-brand bg-slate-200 dark:bg-slate-900 h-1 rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-6 bg-slate-900 text-white p-8 rounded-xl flex flex-col justify-between border border-slate-800 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 text-[60px] font-black tracking-tighter select-none font-mono">LOSS</div>
+                        <div>
+                            <span class="text-[9px] uppercase tracking-widest text-brand font-bold mono">// SIMULATED LOSS OUTCOME</span>
+                            <div class="text-4xl font-black mt-2 font-mono text-white" id="waste-financial-output">$1,020.00 <span class="text-xs text-slate-400 font-normal">USD / mo</span></div>
+                            <p class="text-slate-400 text-xs font-sans mt-4 leading-relaxed" id="waste-desc-output">Your current configurations show vulnerabilities to infrastructure drift. TYVORYX automation eliminates this exposure immediately.</p>
+                        </div>
+                        <div class="border-t border-slate-800 pt-6 mt-6">
+                            <span class="text-[9px] text-slate-500 font-bold block mb-3 uppercase mono">// TARGET ACQUISITION SECURITY INTAKE</span>
+                            <div class="flex gap-2">
+                                <input type="email" id="wizard-email-input" placeholder="Enter security email address" class="bg-darkBg border border-slate-800 rounded px-3 py-2 text-xs w-full outline-none focus:border-brand font-mono text-white">
+                                <button onclick="triggerEliteWizardSubmission()" class="bg-brand hover:bg-brandHover text-white font-bold uppercase tracking-widest text-[10px] px-4 rounded mono transition">Secure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 text-center mono text-[11px]">
+                    <div class="bg-slate-50 dark:bg-darkCard p-4 rounded border border-slate-200 dark:border-slate-900/60">
+                        <div class="text-brand font-bold mb-1">[ STEP 1 ]</div>
+                        <div class="text-slate-900 dark:text-white font-bold uppercase mb-1" data-i18n="step1_title">Identify Vector Bottleneck</div>
+                        <p class="text-[10px] text-slate-400 font-sans leading-tight" data-i18n="step1_desc">Pinpoint RLS, container gaps, or database latency points.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-darkCard p-4 rounded border border-slate-200 dark:border-slate-900/60">
+                        <div class="text-brand font-bold mb-1">[ STEP 2 ]</div>
+                        <div class="text-slate-900 dark:text-white font-bold uppercase mb-1" data-i18n="step2_title">Enforce Sovereignty</div>
+                        <p class="text-[10px] text-slate-400 font-sans leading-tight" data-i18n="step2_desc">Isolate computing environments to local compliant clusters.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-darkCard p-4 rounded border border-slate-200 dark:border-slate-900/60">
+                        <div class="text-brand font-bold mb-1">[ STEP 3 ]</div>
+                        <div class="text-slate-900 dark:text-white font-bold uppercase mb-1" data-i18n="step3_title">Zero Drift State</div>
+                        <p class="text-[10px] text-slate-400 font-sans leading-tight" data-i18n="step3_desc">Lock configuration values and automatically wipe transient memory leaks.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-capabilities" class="module-view w-full max-w-7xl mx-auto px-6 py-16 md:py-24">
+            <div class="max-w-3xl mb-16">
+                <p class="text-[10px] font-bold text-brand uppercase tracking-widest mb-2 mono">// CORE SPECIFICATIONS MATRIX</p>
+                <h2 data-i18n="cap_title" class="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white">Twelve Strategic Modules of Immediate Computing Velocity.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-brand opacity-60 group-hover:opacity-100 transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c1_t">01. Hermetic Docker Isolation</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c1_d">Every business logic component functions in a persistent immutable sandbox context, preventing memory bleed vectors.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-brand opacity-60 group-hover:opacity-100 transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c2_t">02. Supabase Alignment & RLS</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c2_d">Row-Level Security alignment protocols. Hardens structural access layers using phone identification indices to completely destroy SQL injection attempts.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-brand opacity-60 group-hover:opacity-100 transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c3_t">03. Database Stored Procedures RPC</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c3_d">Heavy structural arithmetic sequences like process_daily_roi are processed entirely inside the database core to reduce transit latencies.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c4_t">04. Continuous Anti-Drift Systems</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c4_d">Rigid state monitoring. Any detected structural mutations between system file records and live execution instances are forcefully overridden.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c5_t">05. Quadra-Angle Graph Telemetry</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c5_d">Four parallel tracking layers: dynamic object maps, node board views, chronological Gantt sequences, and raw console runtime event logs.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c6_t">06. Cryptographic Atomic PDF Systems</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c6_d">Asynchronous compiling engines build unalterable, cryptographically signed ledger transactions and reports within temporary runtime layers.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c7_t">07. Hardened Webhook Routers</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c7_d">Ultra-high velocity connection points cleanly linking traditional payment services and crypto exchange nodes with your internal computing core.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c8_t">08. Strict AES-GCM Encapsulation</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c8_d">All dataset entries at rest and inside transfer pipelines are heavily scrambled by enterprise-tier key lengths to negate leakage footprints.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c9_t">09. Zero-Knowledge Environments</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c9_d">TYVORYX never controls, logs, or stores system cryptographic tokens or environment secrets. Absolute local ownership is preserved.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c10_t">10. Synchronous Multi-Zone Mirroring</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c10_d">Live relational states undergo real-time deployment splitting across three decoupled locations to prevent region-wide disaster failure.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c11_t">11. Transient Memory Purgers</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c11_d">The second a database procedure or financial analysis loop concludes, corresponding volatile space records are physically overwritten to block forensic lookups.</p>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl shadow-sm hover:shadow-xl dark:hover:bg-slate-900/40 transition-all duration-300 relative group">
+                    <div class="absolute left-0 top-0 h-full w-[2px] bg-slate-300 dark:bg-slate-800 group-hover:bg-brand transition"></div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2" data-i18n="c12_t">12. Matrix Universal CLI Toolkit</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="c12_d">A powerful, lightweight shell configuration wrapper enabling engineering teams to drive full environment instances with minimal lines of script.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="view-secteurs" class="module-view w-full max-w-7xl mx-auto px-6 py-16 md:py-24">
+            <div class="max-w-3xl mb-16">
+                <p class="text-[10px] font-bold text-brand uppercase tracking-widest mb-2 mono">// GLOBAL INDUSTRIAL VERTICALS</p>
+                <h2 data-i18n="sec_title" class="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white">Engineered for Industries Demanding Rigid Compliance.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl border border-slate-200 dark:border-slate-900/50">
+                    <div class="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center text-brand mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3" data-i18n="s1_t">High-Throughput FinTech Systems</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4" data-i18n="s1_d">Orchestrating intensive financial application steps, linking secure banking gateways, driving immediate database yield tracking routines, and enforcing strict ledger imutability matrix patterns.</p>
+                    <span class="text-[9px] font-bold uppercase mono text-brand">// LATENCY_CRITICAL: MET</span>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl border border-slate-200 dark:border-slate-900/50">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3" data-i18n="s2_t">Sovereign State & Isolated Public Cloud</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4" data-i18n="s2_d">Absolute compliance with rigid national data frameworks. Enforces complete containment boundaries at the hardware layer, banning cross-border meta transfers to unverified nodes.</p>
+                    <span class="text-[9px] font-bold uppercase mono text-emerald-500">// ZERO_DATA_RETENTION: COMPLIANT</span>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard p-8 rounded-xl border border-slate-200 dark:border-slate-900/50">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v6a2 2 0 012-2m14-10V7a2 2 0 00-2-2H5a2 2 0 00-2 2v4"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3" data-i18n="s3_t">Enterprise Software Agencies & DevOps Core</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4" data-i18n="s3_d">Consolidating chaotic application states. Driving direct Git deployment mechanisms that strip down engineering maintenance overhead by up to eighty percent globally.</p>
+                    <span class="text-[9px] font-bold uppercase mono text-blue-500">// DEPLOYMENT_VELOCITY: ACCELERATED</span>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="view-about" class="module-view w-full max-w-4xl mx-auto px-6 py-16 md:py-24">
+            <p class="text-[10px] font-bold text-brand uppercase tracking-widest mb-2 mono">// THE SOVEREIGN MANIFESTO</p>
+            <h2 data-i18n="about_title" class="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-8">Technical Immutability Defeating Software Complexity.</h2>
+            
+            <div class="prose dark:prose-invert text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-6 leading-relaxed">
+                <blockquote data-i18n="about_quote" class="border-l-2 border-brand pl-4 font-medium italic text-slate-900 dark:text-slate-300 bg-slate-50 dark:bg-darkCard p-4 rounded-r-xl">
+                    "The grand majority of modern software network exploits stem not from deep mathematical flaws, but from configuration drift and weak Row-Level permission validation boundaries across backend components."
+                </blockquote>
+                <p data-i18n="about_p1">TYVORYX was deployed to counter a fundamental engineering shift: live enterprise infrastructure clusters have become overly fragile, excessively layered, and unsafely bound to opaque tracking code layers.</p>
+                <p data-i18n="about_p2">Our target is to remove structural system drift entirely. By combining strict isolation sandboxes and automated database access rules, TYVORYX translates delicate business logic environments into autonomous computing strongholds capable of continuous auto-remediation without manual operator reliance.</p>
+            </div>
+        </section>
+
+        <section id="view-faq" class="module-view w-full max-w-4xl mx-auto px-6 py-16 md:py-24">
+            <div class="mb-16">
+                <p class="text-[10px] font-bold text-brand uppercase tracking-widest mb-2 mono">// CORE ENGINEERING DISCLOSURES</p>
+                <h2 data-i18n="faq_title" class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Deep Disclosures Meeting Engineering Standards.</h2>
+            </div>
+
+            <div class="space-y-4 mono text-xs">
+                
+                <div class="bg-slate-50 dark:bg-darkCard rounded-xl border border-slate-200 dark:border-slate-900/60 overflow-hidden">
+                    <button onclick="toggleFaqEngine(1)" class="w-full p-6 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center outline-none">
+                        <span data-i18n="f1_q">// 01. How is data isolation maintained with the database cluster?</span>
+                        <span id="faq-arrow-1" class="text-brand font-mono text-sm font-bold">+</span>
+                    </button>
+                    <div id="faq-content-1" class="hidden px-6 pb-6 text-slate-500 dark:text-slate-400 font-sans text-xs leading-relaxed border-t border-slate-100 dark:border-slate-900/40 pt-4" data-i18n="f1_a">
+                        TYVORYX plugs directly into database clusters via cryptographically isolated channels. The core user information table handles operations strictly by tracking an immutable phone identity key. Explicit Row-Level Security parameters completely isolate parallel multi-tenant execution tracks.
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard rounded-xl border border-slate-200 dark:border-slate-900/60 overflow-hidden">
+                    <button onclick="toggleFaqEngine(2)" class="w-full p-6 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center outline-none">
+                        <span data-i18n="f2_q">// 02. What defines the process_daily_roi stored procedure?</span>
+                        <span id="faq-arrow-2" class="text-brand font-mono text-sm font-bold">+</span>
+                    </button>
+                    <div id="faq-content-2" class="hidden px-6 pb-6 text-slate-500 dark:text-slate-400 font-sans text-xs leading-relaxed border-t border-slate-100 dark:border-slate-900/40 pt-4" data-i18n="f2_a">
+                        It represents a high-priority Remote Procedure Call written directly onto the relational data engine. Running logic at the data source cuts out massive payload transfers to intermediate cloud nodes, enabling heavy arithmetic sweeps to execute in under 0.4 milliseconds.
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard rounded-xl border border-slate-200 dark:border-slate-900/60 overflow-hidden">
+                    <button onclick="toggleFaqEngine(3)" class="w-full p-6 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center outline-none">
+                        <span data-i18n="f3_q">// 03. Are there unpredictable variables in the deployment model?</span>
+                        <span id="faq-arrow-3" class="text-brand font-mono text-sm font-bold">+</span>
+                    </button>
+                    <div id="faq-content-3" class="hidden px-6 pb-6 text-slate-500 dark:text-slate-400 font-sans text-xs leading-relaxed border-t border-slate-100 dark:border-slate-900/40 pt-4" data-i18n="f3_a">
+                        Zero. Resource consumption billing matches absolute compute cycles: you only clear payments for live containers and direct pipeline bandwidth passing through our validated payment node routing networks. Idle nodes hold $0.00 cost parameters.
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-darkCard rounded-xl border border-slate-200 dark:border-slate-900/60 overflow-hidden">
+                    <button onclick="toggleFaqEngine(4)" class="w-full p-6 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center outline-none">
+                        <span data-i18n="f4_q">// 04. How is international data sovereignty achieved?</span>
+                        <span id="faq-arrow-4" class="text-brand font-mono text-sm font-bold">+</span>
+                    </button>
+                    <div id="faq-content-4" class="hidden px-6 pb-6 text-slate-500 dark:text-slate-400 font-sans text-xs leading-relaxed border-t border-slate-100 dark:border-slate-900/40 pt-4" data-i18n="f4_a">
+                        Through structural Zero-Knowledge systems. Because TYVORYX never looks at or retains decryption parameters for your internal data fields, we serve solely as a secure routing structure. Your database layers reside inside the regional borders you map.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <div id="drawer-billing" class="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-darkCard shadow-2xl z-50 transform translate-x-full transition-transform duration-300 border-l border-slate-200 dark:border-slate-900 flex flex-col justify-between">
+        <div class="p-8 overflow-y-auto flex-grow space-y-8">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div class="mono text-[10px] font-bold text-brand">// STRIPE_LEDGER_TUNNEL</div>
+                <button onclick="toggleDrawerEngine('drawer-billing')" class="text-slate-400 hover:text-slate-900 dark:hover:text-white font-mono text-xs">✕</button>
+            </div>
+            <div>
+                <h3 class="text-xl font-black tracking-tight mb-2 text-slate-900 dark:text-white">Solde Operative Wallet</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Approvisionnez les jetons d'exécution nécessaires au maintien de l'isolation de vos clusters Docker.</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-darkBg p-6 rounded-xl border border-slate-200 dark:border-slate-900 text-center mono">
+                <div class="text-[9px] uppercase tracking-wider text-slate-400">// CURRENT_BALANCE</div>
+                <div class="text-3xl font-black text-slate-900 dark:text-white my-2">$150.20 <span class="text-xs font-normal text-slate-400">USD</span></div>
+                <div class="text-[8px] text-green-500 uppercase font-bold tracking-widest mt-1">// Status: Wallet Node Active</div>
+            </div>
+            <div class="space-y-4">
+                <button onclick="triggerStripeSimulationEngine(100)" class="w-full bg-brand hover:bg-brandHover text-white text-[10px] uppercase font-bold tracking-widest p-3.5 rounded mono transition shadow-md">Créditer $100 via Stripe</button>
+                <button onclick="triggerStripeSimulationEngine(500)" class="w-full bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] uppercase font-bold tracking-widest p-3.5 rounded mono transition">Allocation Enterprise ($500)</button>
+            </div>
+        </div>
+        <div class="p-6 bg-slate-100 dark:bg-zinc-900/40 border-t border-slate-200 dark:border-slate-900 text-[9px] text-slate-400 font-mono text-center">
+            Protocole sécurisé TLS 1.3 / Chiffrement des tokens de cartes bancaires.
+        </div>
+    </div>
+
+    <footer class="w-full max-w-7xl mx-auto px-6 py-12 border-t border-slate-200 dark:border-slate-900 transition-colors duration-200">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            
+            <div class="md:col-span-4 text-center md:text-left space-y-2">
+                <div class="text-xs font-black tracking-widest text-slate-900 dark:text-white uppercase">TYVORYX CORPORATION</div>
+                <p class="text-[9px] font-mono text-slate-400 dark:text-slate-600 tracking-wider">&copy; 2026 TYVORYX. Distributed sovereign computing infrastructure. All permissions preserved.</p>
+            </div>
+
+            <div class="md:col-span-4 flex justify-center gap-4 mono text-[10px] font-bold">
+                <a href="https://linkedin.com" target="_blank" class="px-3 py-2 rounded bg-slate-50 dark:bg-darkCard border border-slate-200 dark:border-slate-900 hover:border-brand text-slate-500 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                    <span>LN</span> <span class="text-[8px] text-slate-400 dark:text-slate-600">/ corporate</span>
+                </a>
+                <a href="https://github.com" target="_blank" class="px-3 py-2 rounded bg-slate-50 dark:bg-darkCard border border-slate-200 dark:border-slate-900 hover:border-brand text-slate-500 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                    <span>GH</span> <span class="text-[8px] text-slate-400 dark:text-slate-600">/ sources</span>
+                </a>
+                <a href="https://x.com" target="_blank" class="px-3 py-2 rounded bg-slate-50 dark:bg-darkCard border border-slate-200 dark:border-slate-900 hover:border-brand text-slate-500 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                    <span>X</span> <span class="text-[8px] text-slate-400 dark:text-slate-600">/ telemetry</span>
+                </a>
+                <a href="https://telegram.org" target="_blank" class="px-3 py-2 rounded bg-slate-50 dark:bg-darkCard border border-slate-200 dark:border-slate-900 hover:border-brand text-slate-500 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                    <span>TG</span> <span class="text-[8px] text-slate-400 dark:text-slate-600">/ encrypted</span>
+                </a>
+            </div>
+
+            <div class="md:col-span-4 flex flex-wrap justify-center md:justify-end gap-4 text-[9px] font-mono text-slate-400 dark:text-slate-600">
+                <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> CORE: POSTGRES_SYNC</div>
+                <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span> RLS PERMISSIONS: ACTIVE</div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // FULL ARCHITECTURE DICTIONARY (6 LANGUAGES COMPLETELY POPULATED)
+        const DICTIONNAIRE_TRADUCTION = {
+            EN: {
+                nav_home: "Overview",
+                nav_capabilities: "Capabilities",
+                nav_sectors: "Sectors",
+                nav_manifesto: "Manifesto",
+                nav_faq: "Security FAQ",
+                nav_cta: "Deploy Core Wallet",
+                hero_title: "Virtual Infrastructures.<br><span class='text-slate-400 dark:text-slate-500'>Automated. Zero Drift.</span>",
+                hero_desc: "TYVORYX orchestrates the critical application layer of large organizations. We enforce strict secure containment, eliminate environment drift, and execute your Supabase financial mutations in real time.",
+                hero_btn_main: "Initialize Zero-Trust Wizard →",
+                hero_btn_sec: "Explore Capabilities",
+                audit_title: "Calculate Infrastructure Drift & Waste",
+                audit_subtitle: "Adjust your metrics in real-time to visualize capital leaks caused by container misconfigurations and unprotected database clusters.",
+                step1_title: "Identify Vector Bottleneck",
+                step1_desc: "Pinpoint RLS, container gaps, or database latency points.",
+                step2_title: "Enforce Sovereignty",
+                step2_desc: "Isolate computing environments to local compliant clusters.",
+                step3_title: "Zero Drift State",
+                step3_desc: "Lock configuration values and automatically wipe transient memory leaks.",
+                cap_title: "Twelve Strategic Modules of Immediate Computing Velocity.",
+                c1_t: "01. Hermetic Docker Isolation",
+                c1_d: "Every business logic component functions in a persistent immutable sandbox context, preventing memory bleed vectors.",
+                c2_t: "02. Supabase Alignment & RLS",
+                c2_d: "Row-Level Security alignment protocols. Hardens structural access layers using phone identification indices to completely destroy SQL injection attempts.",
+                c3_t: "03. Database Stored Procedures RPC",
+                c3_d: "Heavy structural arithmetic sequences like process_daily_roi are processed entirely inside the database core to reduce transit latencies.",
+                c4_t: "04. Continuous Anti-Drift Systems",
+                c4_d: "Rigid state monitoring. Any detected structural mutations between system file records and live execution instances are forcefully overridden.",
+                c5_t: "05. Quadra-Angle Graph Telemetry",
+                c5_d: "Four parallel tracking layers: dynamic object maps, node board views, chronological Gantt sequences, and raw console runtime event logs.",
+                c6_t: "06. Cryptographic Atomic PDF Systems",
+                c6_d: "Asynchronous compiling engines build unalterable, cryptographically signed ledger transactions and reports within temporary runtime layers.",
+                c7_t: "07. Hardened Webhook Routers",
+                c7_d: "Ultra-high velocity connection points cleanly linking traditional payment services and crypto exchange nodes with your internal computing core.",
+                c8_t: "08. Strict AES-GCM Encapsulation",
+                c8_d: "All dataset entries at rest and inside transfer pipelines are heavily scrambled by enterprise-tier key lengths to negate leakage footprints.",
+                c9_t: "09. Zero-Knowledge Environments",
+                c9_d: "TYVORYX never controls, logs, or stores system cryptographic tokens or environment secrets. Absolute local ownership is preserved.",
+                c10_t: "10. Synchronous Multi-Zone Mirroring",
+                c10_d: "Live relational states undergo real-time deployment splitting across three decoupled locations to prevent region-wide disaster failure.",
+                c11_t: "11. Transient Memory Purgers",
+                c11_d: "The second a database procedure or financial analysis loop concludes, corresponding volatile space records are physically overwritten to block forensic lookups.",
+                c12_t: "12. Matrix Universal CLI Toolkit",
+                c12_d: "A powerful, lightweight shell configuration wrapper enabling engineering teams to drive full environment instances with minimal lines of script.",
+                sec_title: "Engineered for Industries Demanding Rigid Compliance.",
+                s1_t: "High-Throughput FinTech Systems",
+                s1_d: "Orchestrating intensive financial application steps, linking secure banking gateways, driving immediate database yield tracking routines, and enforcing strict ledger imutability matrix patterns.",
+                s2_t: "Sovereign State & Isolated Public Cloud",
+                s2_d: "Absolute compliance with rigid national data frameworks. Enforces complete containment boundaries at the hardware layer, banning cross-border meta transfers to unverified nodes.",
+                s3_t: "Enterprise Software Agencies & DevOps Core",
+                s3_d: "Consolidating chaotic application states. Driving direct Git deployment mechanisms that strip down engineering maintenance overhead by up to eighty percent globally.",
+                about_title: "Technical Immutability Defeating Software Complexity.",
+                about_quote: '"The grand majority of modern software network exploits stem not from deep mathematical flaws, but from configuration drift and weak Row-Level permission validation boundaries across backend components."',
+                about_p1: "TYVORYX was deployed to counter a fundamental engineering shift: live enterprise infrastructure clusters have become overly fragile, excessively layered, and unsafely bound to opaque tracking code layers.",
+                about_p2: "Our target is to remove structural system drift entirely. By combining strict isolation sandboxes and automated database access rules, TYVORYX translates delicate business logic environments into autonomous computing strongholds capable of continuous auto-remediation without manual operator reliance.",
+                faq_title: "Deep Disclosures Meeting Engineering Standards.",
+                f1_q: "// 01. How is data isolation maintained with the database cluster?",
+                f1_a: "TYVORYX plugs directly into database clusters via cryptographically isolated channels. The core user information table handles operations strictly by tracking an immutable phone identity key. Explicit Row-Level Security parameters completely isolate parallel multi-tenant execution tracks.",
+                f2_q: "// 02. What defines the process_daily_roi stored procedure?",
+                f2_a: "It represents a high-priority Remote Procedure Call written directly onto the relational data engine. Running logic at the data source cuts out massive payload transfers to intermediate cloud nodes, enabling heavy arithmetic sweeps to execute in under 0.4 milliseconds.",
+                f3_q: "// 03. Are there unpredictable variables in the deployment model?",
+                f3_a: "Zero. Resource consumption billing matches absolute compute cycles: you only clear payments for live containers and direct pipeline bandwidth passing through our validated payment node routing networks. Idle nodes hold $0.00 cost parameters.",
+                f4_q: "// 04. How is international data sovereignty achieved?",
+                f4_a: "Through structural Zero-Knowledge systems. Because TYVORYX never looks at or retains decryption parameters for your internal data fields, we serve solely as a secure routing structure. Your database layers reside inside the regional borders you map."
+            },
+            FR: {
+                nav_home: "Vue Globale",
+                nav_capabilities: "Fonctionnalités",
+                nav_sectors: "Secteurs",
+                nav_manifesto: "Manifeste",
+                nav_faq: "FAQ Sécurité",
+                nav_cta: "Déployer le Wallet Core",
+                hero_title: "Infrastructures Virtuelles.<br><span class='text-slate-400 dark:text-slate-500'>Automatisées. Sans Dérive.</span>",
+                hero_desc: "TYVORYX orchestre la couche applicative critique des grandes organisations. Nous imposons une isolation stricte des conteneurs, éliminons les dérives d'environnement et exécutons vos mutations financières Supabase en temps réel.",
+                hero_btn_main: "Initialiser le Magicien Zero-Trust →",
+                hero_btn_sec: "Explorer les Capacités",
+                audit_title: "Calculer les Dérives et Pertes d'Infrastructure",
+                audit_subtitle: "Ajustez vos métriques en temps réel pour visualiser les fuites financières générées par les défauts de configuration et les clusters non protégés.",
+                step1_title: "Identifier les Goulots d'Étranglement",
+                step1_desc: "Ciblez les failles de RLS, les écarts de conteneurs ou les latences de base de données.",
+                step2_title: "Imposer la Souveraineté",
+                step2_desc: "Isolez les environnements de calcul au sein de clusters locaux conformes.",
+                step3_title: "État de Dérive Zéro",
+                step3_desc: "Verrouillez les configurations et purgez automatiquement les fuites de mémoire éphémère.",
+                cap_title: "Douze Modules Stratégiques de Puissance Technologique Immédiate.",
+                c1_t: "01. Isolation Conteneurs Hermétique",
+                c1_d: "Chaque composant applicatif s'exécute dans un bac à sable immuable, neutralisant les risques de fuite de mémoire.",
+                c2_t: "02. Alignement Supabase & Droits RLS",
+                c2_d: "Sécurisation au niveau des lignes. Verrouille l'accès aux tables via l'identifiant unique phone pour anéantir les injections SQL.",
+                c3_t: "03. Procédures Stockées RPC BDD",
+                c3_d: "Les calculs lourds comme process_daily_roi s'exécutent au coeur du moteur relationnel pour détruire les délais de transit.",
+                c4_t: "04. Contrôle Anti-Dérive Continu",
+                c4_d: "Surveillance rigide de l'état. Tout écart entre vos configurations sources et l'état actif est immédiatement écrasé.",
+                c5_t: "05. Télémétrie Graphique Quadra-Axe",
+                c5_d: "Quatre couches de suivi : cartographie relationnelle, flux Kanban, chronologie Gantt et journaux de logs console bruts.",
+                c6_t: "06. Compilation PDF Atomique Signée",
+                c6_d: "Moteurs de compilation asynchrones générant des registres de transactions immuables signés cryptographiquement sous environnement éphémère.",
+                c7_t: "07. Routeurs de Webhooks Durcis",
+                c7_d: "Passerelles ultra-rapides connectant vos flux bancaires traditionnels ou flux d'échanges crypto directement à votre noyau.",
+                c8_t: "08. Chiffrement Strict AES-GCM",
+                c8_d: "Toutes les données au repos ou en transit sont segmentées par clés militaires pour supprimer l'empreinte résiduelle.",
+                c9_t: "09. Architectures Zero-Knowledge",
+                c9_d: "TYVORYX ne stocke ni ne lit vos clés d'infrastructure ou secrets d'environnement. La propriété souveraine reste totale.",
+                c10_t: "10. Miroitement Multi-Zone Synchrone",
+                c10_d: "Réplication instantanée des bases de données sur trois localisations isolées pour parer tout sinistre de zone.",
+                c11_t: "11. Purgeurs de Mémoire Volatile",
+                c11_d: "À la seconde où une boucle de calcul se termine, l'allocation RAM est détruite pour interdire toute analyse forensique adverse.",
+                c12_t: "12. Suite d'Outils CLI Universelle",
+                c12_d: "Un wrapper de commandes léger permettant à vos ingénieurs de piloter l'infrastructure en moins de 5 lignes de script.",
+                sec_title: "Conçu Pour les Secteurs à Haute Exigence Opérationnelle.",
+                s1_t: "FinTech & Gestion d'Actifs Haut Débit",
+                s1_d: "Orchestration de microservices bancaires, interconnexion aux APIs de portefeuilles, routage de calculs de rendements automatisés via Supabase PostgreSQL, et sécurisation cryptographique des registres transactionnels.",
+                s2_t: "Souveraineté d'État & Cloud Public Isolé",
+                s2_d: "Conformité aux cadres de sécurité étatiques stricts. Isolation étanche au niveau des couches OS, interdiction totale de transfert de métadonnées vers des entités tierces hors de la zone européenne.",
+                s3_t: "Agences Logicielles & DevOps Matrix",
+                s3_d: "Centralisation des architectures clients complexes. Déploiement automatisé sans dérive à partir de branches Git maîtresses, réduction de 80% des heures de maintenance d'infrastructures cloud éparpillées.",
+                about_title: "L'Immuabilité Technique Contre le Chaos Logiciel.",
+                about_quote: '"La majorité des failles logicielles d\'envergure d\'aujourd\'hui ne proviennent pas d\'erreurs mathématiques complexes, mais d\'une dérive constante et incontrôlée des configurations locales et de la légèreté des droits d\'accès aux tables de production."',
+                about_p1: "TYVORYX est né d'un constat radical : les architectures cloud actuelles sont devenues trop permissives, trop lourdes, et excessivement dépendantes de couches d'abonnements opaques.",
+                about_p2: "Notre but est de poser un blindage. En forçant la conteneurisation stricte et en automatisant des connecteurs Supabase PostgreSQL nativement protégés au niveau des lignes, TYVORYX convertit vos applicatifs métiers fragiles en une forteresse opérationnelle autonome capable de s'auto-guérir sans aucune action humaine externe.",
+                faq_title: "Réponses Visant l'Excellence Technique.",
+                f1_q: "// 01. Comment s'organise la liaison et l'étanchéité avec Supabase ?",
+                f1_a: "TYVORYX s'interface directement avec vos instances PostgreSQL Supabase à l'aide de protocoles d'accès isolés. La table maîtresse users emploie la colonne phone comme identifiant exclusif non modifiable. Les règles RLS (Row-Level Security) barrent de façon native toute tentative de lecture croisée entre différents contextes.",
+                f2_q: "// 02. Qu'est-ce que l'exécution RPC process_daily_roi ?",
+                f2_a: "Il s'agit d'une procédure stockée de calcul de rendement mathématique complexe (Remote Procedure Call) compilée et hébergée à la racine de votre moteur relationnel. Ce choix élimine le rapatriement massif de lignes de logs vers des serveurs intermédiaires, assurant un traitement complet en moins de 0.4 milliseconde.",
+                f3_q: "// 03. Le modèle Pay-as-you-go applique-t-il des coûts cachés ?",
+                f3_a: "Absolument aucun. La facturation s'aligne à l'usage pur : seuls les volumes de requêtes d'exécutions d'infrastructures et de jetons transitant par notre passerelle Stripe chiffrée sont décomptés. Les infrastructures inactives consomment $0.00.",
+                f4_q: "// 04. Comment la plateforme gère-t-elle la conformité RGPD ?",
+                f4_a: "Grâce au déploiement Zero-Knowledge. N'ayant jamais accès aux clés d'encapsulation de vos données ni aux tables relationnelles en clair, TYVORYX agit comme un orchestrateur aveugle neutre. Vos données restent stockées dans les zones souveraines que vous délimitez."
+            },
+            DE: {
+                nav_home: "Übersicht", nav_capabilities: "Funktionen", nav_sectors: "Sektoren", nav_manifesto: "Manifest", nav_faq: "Sicherheits-FAQ", nav_cta: "Core Wallet Aktivieren",
+                hero_title: "Virtuelle Infrastrukturen.<br><span class='text-slate-400 dark:text-slate-500'>Automatisiert. Keine Drift.</span>",
+                hero_desc: "TYVORYX orchestriert die kritische Anwendungsebene großer Organisationen. Wir erzwingen eine strikte Container-Isolierung und verhindern Drift.",
+                audit_title: "Infrastruktur-Drift & Verschwendung Berechnen", audit_subtitle: "Passen Sie Parameter in Echtzeit an, um finanzielle Verluste durch Fehlkonfigurationen darzustellen.",
+                step1_title: "Engpass Identifizieren", step1_desc: "Ermitteln Sie Schwachstellen in RLS oder Container-Verbindungen.",
+                step2_title: "Souveränität Erzwingen", step2_desc: "Isolieren Sie Compute-Umgebungen in lokalen Clustern.",
+                step3_title: "Null-Drift-Status", step3_desc: "Konfigurationen sperren und flüchtigen RAM-Speicher bereinigen.",
+                cap_title: "Zwölf Module für Unmittelbare Technologische Leistung.",
+                c1_t: "01. Hermetische Docker-Isolierung", c1_d: "Jede Logik läuft in einer unveränderlichen Sandbox, um Speicherlecks zu verhindern.",
+                c2_t: "02. Supabase-Ausrichtung & RLS", c2_d: "Row-Level Security sichert Tabellenzugriffe über eindeutige Telefon-IDs.",
+                c3_t: "03. Datenbank-RPC-Prozeduren", c3_d: "Schwere Berechnungen wie process_daily_roi laufen ohne Latenz direkt im Kern.",
+                c4_t: "04. Kontinuierlicher Drift-Schutz", c4_d: "Unerwartete Abweichungen im Systemzustand werden sofort überschrieben.",
+                c5_t: "05. Quadra-Achs-Diagramm-Telemetrie", c5_d: "Vier parallele Analyseebenen überwachen alle Metriken in Echtzeit.",
+                c6_t: "06. Kryptografische PDF-Kompilierung", c6_d: "Erstellt fälschungssichere, signierte Berichte in temporären Schichten.",
+                c7_t: "07. Gehärtete Webhook-Router", c7_d: "Verbindet Zahlungsdienste und Krypto-Nodes direkt mit dem Kern.",
+                c8_t: "08. Strikte AES-GCM Verschlüsselung", c8_d: "Daten im Ruhezustand und Transfer werden militärisch verschlüsselt.",
+                c9_t: "09. Zero-Knowledge-Architektur", c9_d: "TYVORYX speichert keine kryptografischen Token. Volle lokale Kontrolle.",
+                c10_t: "10. Synchrone Multi-Zone-Spiegelung", c10_d: "Echtzeit-Replikation auf drei entkoppelte Standorte zur Ausfallsicherheit.",
+                c11_t: "11. RAM-Speicherbereinigung", c11_d: "Nach Ausführung werden temporäre Daten überschrieben, um Forensik zu blockieren.",
+                c12_t: "12. Universelles CLI-Toolkit", c12_d: "Ermöglicht Steuerung von Clustern mit minimalen Befehlszeilen.",
+                sec_title: "Entwickelt für Sektoren mit Höchsten Anforderungen.",
+                s1_t: "Hochleistungs-FinTech-Systeme", s1_d: "Verwaltung kritischer Bank-APIs und automatisierter Ertragsberechnung via Supabase.",
+                s2_t: "Staatliche Souveränität & Cloud", s2_d: "Einhaltung strengster europäischer Datenschutz- und Sicherheitsrichtlinien.",
+                s3_t: "DevOps & Software-Agenturen", s3_d: "Automatisierte Bereitstellung reduziert Wartungsaufwand um achtzig Prozent.",
+                about_title: "Technische Immutabilität Gegen das Software-Chaos.",
+                about_quote: '"Konfigurations-Drift ist die Ursache moderner Sicherheitsrisiken."',
+                about_p1: "Gegen intransparente Cloud-Schichten setzen wir auf kalte, symmetrische Systeme.",
+                about_p2: "TYVORYX verwandelt fragile Logik in eine selbstheilende forteressenähnliche Struktur.",
+                faq_title: "Antworten auf Höchstem Technischen Niveau.",
+                f1_q: "// 01. Wie erfolgt die Absicherung mit Supabase?", f1_a: "Durch striktes RLS und Zuordnung über die phone-ID.",
+                f2_q: "// 02. Was ist die RPC-Funktion process_daily_roi?", f2_a: "Eine im Kern optimierte Datenbankfunktion, die Berechnungen unter 0,4ms abschließt.",
+                f3_q: "// 03. Gibt es versteckte Kosten im Pay-as-you-go-Modell?", f3_a: "Nein, Abrechnung erfolgt streng nach verbrauchten Zyklen und Bandbreite.",
+                f4_q: "// 04. Wie wird DSGVO-Konformität erreicht?", f4_a: "Durch Zero-Knowledge-Verschlüsselung verbleiben Daten komplett in Ihrer Zone."
+            },
+            ZH: {
+                nav_home: "系统总览", nav_capabilities: "核心功能", nav_sectors: "适用领域", nav_manifesto: "技术宣言", nav_faq: "安全合规", nav_cta: "部署核心钱包",
+                hero_title: "虚拟基础设施。<br><span class='text-slate-400 dark:text-slate-500'>自动化。零配置漂移。</span>",
+                hero_desc: "TYVORYX 编排大型企业的关键应用层。我们强制执行严格的容器隔离，消除配置漂移，并实时执行您的 Supabase 财务计算逻辑。",
+                audit_title: "计算基础设施配置漂移与损耗", audit_subtitle: "实时调整以下参数，直观显示由于容器错误配置或未受保护的数据库集群导致的资金流失情况。",
+                step1_title: "准确定位技术瓶颈", step1_desc: "精确定位 RLS 配置漏洞、容器隔离缺口或数据库高延迟节点。",
+                step2_title: "强制执行数据主权", step2_desc: "将核心计算环境完全隔离部署在本地合规的加密集群中。",
+                step3_title: "达到零配置漂移状态", step3_desc: "硬锁定系统核心配置参数，并在事务结束时自动擦除易失性内存。 ",
+                cap_title: "十二个具备即时技术响应能力的核心模块。",
+                c1_t: "01. 严密 Docker 容器隔离", c1_d: "所有核心业务逻辑均运行在不可变的沙箱环境中，从根本上防止内存泄漏与跨容器越权。",
+                c2_t: "02. Supabase 深度集成与 RLS", c2_d: "行级安全对齐协议。基于用户唯一的 phone ID 构建数据防火墙，彻底杜绝恶意 SQL 注入行为。",
+                c3_t: "03. 数据库核心 RPC 存储过程", c3_d: "高负载的实时收益清算等复杂算法（如 process_daily_roi）直接部署于内核运行，大幅压降传输延迟。",
+                c4_t: "04. 持续配置防漂移系统", c4_d: "对基础架构状态实施刚性监控，任何偏离代码定义的异常改动均会被系统自动重写覆写。",
+                c5_t: "05. 四维全景图形化遥测", c5_d: "集成关系映射图、节点看板、甘特时序图及原始控制台实时日志，四大层面全方位监控系统状态。",
+                c6_t: "06. 原子级安全加密 PDF 系统", c6_d: "异步编译引擎在独立的内存清算层中一键生成自带数字签名的、不可篡改的流水账单与技术审计报告。",
+                c7_t: "07. 高防 API 路由", c7_d: "提供高并发、毫秒级响应的加密接口路由，安全稳定地打通银行结算网关与去中心化资产网络。",
+                c8_t: "08. 严格高级 AES-GCM 数据硬加密", c8_d: "所有静态存储数据和传输管道信息均经过军工级密钥分块打碎，彻底消除数据残留特征。",
+                c9_t: "09. 零知识（Zero-Knowledge）底层架构", c9_d: "TYVORYX 不保留、不记录亦不接触您的私钥、账据或环境密钥，确保绝对的本地资产主权。",
+                c10_t: "10. 多可用区实时异地多活", c10_d: "数据库状态跨地区秒级多活同步复制，单点机房遭遇极端物理损毁时，系统整体实现零感切换。",
+                c11_t: "11. 内存极速物理擦除机制", c11_d: "任何清算事务或计算过程一旦闭环，底层分配的 RAM 单元将立刻执行清零指令，杜绝冷启动分析。",
+                c12_t: "12. 矩阵式通用 CLI 开发套件", c12_d: "极简轻量级命令行封装，允许工程师仅需输入数行简短指令即可敏捷掌控大规模集群的生命周期。",
+                sec_title: "专为具备高合规性及极端运营要求的行业而设计。",
+                s1_t: "高并发 FinTech 金融清算系统", s1_d: "深度编排银行关键接口及各类数字资产钱包，通过高性能 Supabase 架构完成自动化收益分配。",
+                s2_t: "国家级政务主权云与数据安全合规", s2_d: "严格遵守最高级别的区域数据不出境合规框架，在操作系统底层对跨区域数据流动实施物理切断。",
+                s3_t: "软件研发机构与自动化 DevOps 核芯", s3_d: "对复杂庞大的跨国企业分支架构实施全面代码化管理，将常态化系统维护与容灾成本压降 80% 以上。",
+                about_title: "技术不变性对抗软件系统复杂性层级。",
+                about_quote: '"当今绝大多数软件系统的安全崩溃，均源自生产环境配置的无序漂移以及数据库行级安全权限管理的缺失。"',
+                about_p1: "TYVORYX 诞生于对庞大、黑箱且臃肿的传统多层云服务的底层反思，我们崇尚冷峻、对称、极简且绝对不可变的硬核工程美学。",
+                about_p2: "我们的唯一目标是为企业建立数字防线。通过强制性的微服务沙箱化和自动化的安全逻辑绑定，将脆弱的业务代码塑造成具备自我修复能力的数字堡垒。",
+                faq_title: "旨在达到卓越技术指标的核心技术解答。",
+                f1_q: "// 01. 系统是如何与数据库群集实现完全安全隔离的？", f1_a: "TYVORYX 采用专用加密通道接入数据库，核心用户表严格以不可变 phone 字段进行关系绑定，通过 PostgreSQL 行级安全规则彻底切断跨租户越权查询风险。",
+                f2_q: "// 02. process_daily_roi 存储过程的内部运行逻辑是什么？", f2_a: "它是直接常驻数据库底层的高优先级远程过程调用（RPC）。在数据源就地清算不仅消除了网络 I/O 开销，更确保全表清算算法在 0.4 毫秒内硬性闭环。",
+                f3_q: "// 03. 按量计费（Pay-as-you-go）模型是否存在任何潜在的隐性财务账单？", f3_a: "绝对不存在。计费机制严格与实际消耗的计算周期及管道带宽对齐，静态闲置节点及未激活环境的资源占用费用为 $0.00。",
+                f4_q: "// 04. 平台是如何在底层设计上百分之百实现跨国合规的？", f4_a: "依托零知识加密机制。由于平台无法获取更没有路径还原您的应用明文与数据库秘钥，TYVORYX 仅作为抽象编排管道运行，所有数据资产完全受控于您指定的本地物理节点内。"
+            },
+            ES: {
+                nav_home: "Resumen", nav_capabilities: "Capacidades", nav_sectors: "Sectores", nav_manifesto: "Manifiesto", nav_faq: "FAQ Seguridad", nav_cta: "Desplegar Wallet Core",
+                hero_title: "Infrastructuras Virtuales.<br><span class='text-slate-400 dark:text-slate-500'>Automatizadas. Sin Derivas.</span>",
+                hero_desc: "TYVORYX orquesta la capa de aplicación crítica de grandes organizaciones. Forzamos el aislamiento mediante contenedores seguros y eliminamos la deriva.",
+                audit_title: "Calcular Deriva y Pérdidas de Infraestructura", audit_subtitle: "Ajuste sus métricas en tiempo real para visualizar pérdidas financieras causadas por errores de configuración.",
+                step1_title: "Identificar Cuello de Botella", step1_desc: "Detecte brechas de RLS o latencias en base de datos.",
+                step2_title: "Forzar Soberanía", step2_desc: "Aísle entornos de computación en clústeres locales.",
+                step3_title: "Estado Deriva Cero", step3_desc: "Bloquee variables de configuración y purgue memoria residual.",
+                cap_title: "Doce Módulos de Potencia Tecnológica Inmediata.",
+                c1_t: "01. Aislamiento Docker Hermético", c1_d: "Cada componente de lógica de negocio opera en un entorno seguro e inmutable.",
+                c2_t: "02. Alineación Supabase & RLS", c2_d: "Protección a nivel de filas utilizando el índice único phone.",
+                c3_t: "03. Procedimientos Almacenados RPC", c3_d: "Cálculos masivos como process_daily_roi se ejecutan en el núcleo de la base de datos.",
+                c4_t: "04. Control Continuo Anti-Deriva", c4_d: "Cualquier cambio no autorizado en la configuración es anulado inmediatamente.",
+                c5_t: "05. Telemetría Gráfica de Cuatro Ejes", c5_d: "Mapas dinámicos, flujos visuales, secuencias Gantt y consola de registros.",
+                c6_t: "06. Compilación PDF Atómica Firmada", c6_d: "Generación de reportes inmutables y firmados en entornos temporales.",
+                c7_t: "07. Enrutadores Webhooks Reforzados", c7_d: "Conecta pasarelas bancarias y nodos criptográficos al núcleo de forma rápida.",
+                c8_t: "08. Encapsulado Estricto AES-GCM", c8_d: "Los datos en reposo y tránsito se fragmentan mediante cifrado militar.",
+                c9_t: "09. Arquitecturas Zero-Knowledge", c9_d: "TYVORYX nunca gestiona ni almacena claves privadas. Control local absoluto.",
+                c10_t: "10. Réplica Multi-Zona Síncrona", c10_d: "Duplicación instantánea en tres zonas geográficas para evitar pérdidas.",
+                c11_t: "11. Purga de Memoria Volátil", c11_d: "Los datos se sobrescriben al terminar el proceso para evitar análisis forenses.",
+                c12_t: "12. Kit de Herramientas CLI Universal", c12_d: "Permite controlar infraestructuras complejas con pocas líneas de comandos.",
+                sec_title: "Diseñado Para Sectores con Altas Exigencias Operativas.",
+                s1_t: "Sistemas FinTech de Alto Rendimiento", s1_d: "Orquestación de microservicios bancarios y cálculos automatizados mediante Supabase.",
+                s2_t: "Soberanía de Estado y Nube Pública", s2_d: "Cumplimiento estricto de marcos legales y de soberanía de datos locales.",
+                s3_t: "Agencias de Software y DevOps Core", s3_d: "Automatización de despliegues que reduce costes de mantenimiento en un 80%.",
+                about_title: "Inmutabilidad Técnica Contra el Caos de Software.",
+                about_quote: '"La deriva de configuración es el origen de las mayores vulnerabilidades modernas."',
+                about_p1: "Alineamos sistemas de manera simétrica contra la fragmentación del software.",
+                about_p2: "TYVORYX transforma código frágil en infraestructuras capaces de auto-repararse.",
+                faq_title: "Respuestas Orientadas a la Excelencia Técnica.",
+                f1_q: "// 01. ¿Cómo se asegura el aislamiento con Supabase?", f1_a: "Mediante reglas estrictas de RLS vinculadas al campo de teléfono.",
+                f2_q: "// 02. ¿Qué ventaja ofrece process_daily_roi como RPC?", f2_a: "Ejecuta los procesos matemáticos en el motor de base de datos en menos de 0.4ms.",
+                f3_q: "// 03. ¿Existen costes ocultos en el modelo de uso?", f3_a: "No, la facturación se ajusta estrictamente a los ciclos de computación activos.",
+                f4_q: "// 04. ¿Cómo gestiona la plataforma el cumplimiento normativo?", f4_a: "Al no tener acceso a sus datos en claro, garantizamos soberanía total."
+            },
+            JA: {
+                nav_home: "概要", nav_capabilities: "機能マトリクス", nav_sectors: "適応セクター", nav_manifesto: "開発宣言", nav_faq: "セキュリティFAQ", nav_cta: "コアウォレットをデプロイ",
+                hero_title: "仮想インフラストラクチャ。<br><span class='text-slate-400 dark:text-slate-500'>自動化。構成ドリフトゼロ。</span>",
+                hero_desc: "TYVORYXは大規模組織のクリティカルなアプリケーション層をオーケストレートします。厳格なコンテナ分離を強制し、構成の偏りを排除して、Supabaseの財務計算をリアルタイムに実行します。",
+                audit_title: "インフラの構成ドリフトと経済損失の算出", audit_subtitle: "以下のパラメータをリアルタイムに調整し、コンテナの誤設定や保護されていないデータベースに起因する資本流失を可視化します。",
+                step1_title: "ボトルネックの特定", step1_desc: "RLSの脆弱性、コンテナの隔離不備、またはデータベースの遅延ノードを正確に検出します。",
+                step2_title: "データ主権の強制", step2_desc: "コア計算環境を、ローカルの準拠した暗号化クラスター内に完全に隔離デプロイします。",
+                step3_title: "構成ドリフトゼロの状態", step3_desc: "システム構成の変数を完全にロックし、処理終了時に揮発性メモリ領域を自動的に消去します。",
+                cap_title: "即座に技術的優位性を確立する12の高精度モジュール。",
+                c1_t: "01. 厳格な Docker コンテナ分離", c1_d: "すべてのビジネスロジックは不変のサンドボックス環境で動作し、メモリリークや不正アクセスを根本から遮断します。",
+                c2_t: "02. Supabase 連携と RLS 制御", c2_d: "行レベルセキュリティ（RLS）プロトコル。固有の phone ID を用いてアクセス層を強固に保護し、SQLインジェクションを完全に無効化します。",
+                c3_t: "03. データベース内 RPC ストアドプロシージャ", c3_d: "process_daily_roi のような高負荷の計算ロジックをデータベースコアで直接実行し、ネットワーク往復の遅延を抹消します。",
+                c4_t: "04. 継続的アンチ・ドリフト・システム", c4_d: "システム状態を厳格に監視。定義されたソースコードと実行インスタンスの間に差異が検出された場合、自動的に上書き同期します。",
+                c5_t: "05. 4軸統合グラフィカル・テレメトリー", c5_d: "関係マップ、ノードカンバン、ガントチャート、コンソールログの4つのレイヤーからシステム状態をリアルタイムに監視します。",
+                c6_t: "06. 暗号化アトミック PDF 生成", c6_d: "非同期コンパイルエンジンにより、改ざん不可能なデジタル署名付きの取引明細書やシステム監査報告書を瞬時に生成します。",
+                c7_t: "07. 高堅牢ウェブフック・ルーター", c7_d: "高並列・ミリ秒応答の暗号化インターフェース。既存の決済ゲートウェイや暗号資産ノードを内部コアと安全に直結します。",
+                c8_t: "08. 厳格な AES-GCM データの暗号化", c8_d: "静止データおよび転送パイプライン内のすべての情報は、ミリタリークラスの鍵長で断片化され、データ残存特性を排除します。",
+                c9_t: "09. ゼロ知識（Zero-Knowledge）底层構造", c9_d: "TYVORYXは、お客様の秘密鍵や環境トークンにアクセス、記録、保持せず、絶対的なローカル主権を維持します。",
+                c10_t: "10. 同期型マルチゾーン・ミラーリング", c10_d: "データベースの状態を複数地域にリアルタイムに複製し、単一データセンターの物理的障害発生時もゼロタイムで切り替えます。",
+                c11_t: "11. 揮発性メモリの高速消去メカニズム", c11_d: "計算処理が完了した瞬間、割り当てられた RAM 領域にゼロクリア指令を実行し、コールドブート分析を阻止します。",
+                c12_t: "12. マトリクス・ユニバーサル CLI 開発キット", c12_d: "軽量なコマンドラインインターフェースにより、数行のコマンドで大規模クラスターのライフサイクルを迅速に制御可能です。",
+                sec_title: "極めて厳格な運用コンプライアンスが求められる産業向け設計。",
+                s1_t: "高スループット FinTech 決済システム", s1_d: "銀行のクリティカルなインターフェースや資産ウォレットを編成し、Supabaseアーキテクチャを通じて収益配分を自動化します。",
+                s2_t: "国家級政務主権クラウドとセキュリティ合規", s2_d: "最高レベルのデータ主権枠組みを遵守し、OSの基礎レイヤーで地域外へのデータ移動を物理的に制限します。",
+                s3_t: "ソフトウェア開発機関と自動化 DevOps 核芯", s3_d: "企業の複雑なブランチインフラを完全にコード管理化し、インフラの保守運用コストを最大80%削減します。",
+                about_title: "ソフトウェアの複雑性に対抗する、技術的イミュータビリティ。",
+                about_quote: '"現代のシステム崩壊の大部分は、複雑な数学的欠陥ではなく、構成ドリフトと行レベルの権限管理の不備に起因している。"',
+                about_p1: "不透明で肥大化した既存のマルチレイヤークラウドに対し、冷徹、対称、不変のエンジニアリングで対抗します。",
+                about_p2: "脆弱なアプリケーションコードを、自己修復能力を備えた自律的なデジタルの要塞へと変換することが私たちの目的です。",
+                faq_title: "最高峰の技術基準を満たすエンジニアリング開示事項。",
+                f1_q: "// 01. データベース群との安全な隔離はどのように維持されますか？", f1_a: "専用の暗号化チャネルで接続し、usersテーブルを不変のphoneフィールドで紐付け、PostgreSQLのRLS規則でテナント間の不正参照を完全に遮断します。",
+                f2_q: "// 02. process_daily_roi ストアプロシージャの利点は何ですか？", f2_a: "データソース直下で処理を行うことで、通信I/Oを排除し、全演算処理を0.4ミリ秒以内に確実に完了させます。",
+                f3_q: "// 03. 従量課金（Pay-as-you-go）モデルに、隠れたコストはありますか？", f3_a: "一切ありません。課金は実際に消費された計算サイクルと帯域幅に厳密に連動し、アイドル状態のノード費用は$0.00です。",
+                f4_q: "// 04. プラットフォームはどのようにデータコンプライアンスを達成していますか？", f4_a: "ゼロ知識暗号化メカニズムに拠ります。プラットフォームはお客様の明文データや秘密鍵を保持しないため、純粋なオーケストレーションパイプラインとして機能します。"
+            }
+        };
+
+        let activeLanguage = 'EN';
+
+        // CLICK-BASED CONTROLS FOR REGIONAL CONFIGURATION DROPDOWN
+        function toggleLanguageMenuEngine(event) {
+            event.stopPropagation();
+            const box = document.getElementById('lang-dropdown-box');
+            if(box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        // CLOSE LANGUAGES BOX IF THE OPERATOR CLICKS EXTERNALLY
+        document.addEventListener('click', function() {
+            document.getElementById('lang-dropdown-box').classList.add('hidden');
+        });
+
+        // HIGH PERFORMANCE RE-ENGINEERED TRANSLATION ENGINE
+        function switchLanguageEngine(langCode) {
+            activeLanguage = langCode;
+            document.getElementById('active-lang-label').innerText = langCode;
+            
+            const metaTag = document.getElementById('hero-meta');
+            if(langCode === 'FR') metaTag.innerText = "// ECOSYSTÈME SOUVERAIN DE DISTRIBUTIONS CLOUD // CONFIG PARITY: 100%";
+            else if(langCode === 'EN') metaTag.innerText = "// ECOSYSTEM REGION: GLOBAL_EDGE // PARITY: 100%";
+            else metaTag.innerText = `// GLOBAL INFRASTRUCTURE MATRIX // REGION: ${langCode} // MATCHED`;
+
+            // Complete systematic lookup for text switching
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (DICTIONNAIRE_TRADUCTION[langCode] && DICTIONNAIRE_TRADUCTION[langCode][key]) {
+                    element.innerHTML = DICTIONNAIRE_TRADUCTION[langCode][key];
+                }
+            });
+            console.log(`[CORE REGION CONTROLS] Context mutated to node tag: ${langCode}`);
+        }
+
+        // ACTIVE SUBSECTION ROUTER
+        function navigateTo(moduleKey) {
+            document.querySelectorAll('.module-view').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(`view-${moduleKey}`);
+            if (targetView) targetView.classList.add('active');
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('data-nav') === moduleKey) {
+                    link.className = "nav-link text-brand transition";
+                } else {
+                    link.className = "nav-link text-slate-400 hover:text-brand transition";
+                }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.location.hash = `/${moduleKey}`;
+            console.log(`[ROUTER CORE] Focus altered toward segment: #/${moduleKey}`);
+        }
+
+        // LIGHT / DARK CLASSIFICATION SHIFTER
+        function toggleThemeEngine() {
+            const docClasses = document.documentElement.classList;
+            if (docClasses.contains('dark')) {
+                docClasses.remove('dark');
+                localStorage.setItem('tyvoryx-theme', 'light');
+            } else {
+                docClasses.add('dark');
+                localStorage.setItem('tyvoryx-theme', 'dark');
+            }
+        }
+
+        // SLIDER CONTROL LAYER FOR EXTRA DRAWERS
+        function toggleDrawerEngine(drawerId) {
+            const drawer = document.getElementById(drawerId);
+            if (drawer.classList.contains('hidden')) {
+                drawer.classList.remove('hidden');
+                setTimeout(() => drawer.classList.remove('translate-x-full'), 10);
+            } else {
+                drawer.classList.add('translate-x-full');
+                setTimeout(() => drawer.classList.add('hidden'), 300);
+            }
+        }
+
+        // INTERNAL DISCLOSURE ACCORDIONS (FAQ)
+        function toggleFaqEngine(index) {
+            const block = document.getElementById(`faq-content-${index}`);
+            const arrow = document.getElementById(`faq-arrow-${index}`);
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                arrow.innerText = '−';
+            } else {
+                block.classList.add('hidden');
+                arrow.innerText = '+';
+            }
+        }
+
+        // EXPLICIT INTERNAL VIEW INTERNAL LINK SCROLLING
+        function scrollToSection(elementId) {
+            navigateTo('home');
+            setTimeout(() => {
+                document.getElementById(elementId).scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // ASYNCHRONOUS SLIDER METRIC CALCULATION ENGINE
+        function updateWasteSimulatorEngine() {
+            const containers = parseInt(document.getElementById('slide-containers').value);
+            const mutations = parseInt(document.getElementById('slide-mutations').value);
+            const drift = parseInt(document.getElementById('slide-drift').value);
+
+            // Display numerical readouts
+            document.getElementById('val-containers').innerText = containers;
+            document.getElementById('val-mutations').innerText = mutations + "M";
+            document.getElementById('val-drift').innerText = drift + "%";
+
+            // Hard core valuation formulas matching infrastructure cost architectures
+            const financialWaste = (containers * 3.50) + (mutations * 0.85) + (drift * 12.40);
+            
+            // Format output string cleanly
+            document.getElementById('waste-financial-output').innerText = `$${financialWaste.toFixed(2)} USD / mo`;
+            
+            const descBox = document.getElementById('waste-desc-output');
+            if(financialWaste > 1200) {
+                descBox.innerText = "Critical Exposure Detected. System configuration drift values present extreme security vectors and immediate financial budget losses.";
+            } else if(financialWaste > 500) {
+                descBox.innerText = "Moderate Capital Leakage. Database queries and microservice partitions require active Row-Level Security alignment.";
+            } else {
+                descBox.innerText = "Nominal System Overhead. Minor container tracking discrepancies observed. TYVORYX automation handles this profile easily.";
+            }
+        }
+
+        // CONTROL INTEGRITY STRIPE EMULATION TARGETS
+        function triggerStripeSimulationEngine(value) {
+            console.log(`[STRIPE PIPELINE] Initiating encryption keys verification for secure payload worth: $${value}.00`);
+            alert(`[STRIPE INBOUND LEDGER]\n3D-Secure authentication node activated.\nCompute tokens allocation request: $${value}.00 USD.\nConnection parameters verified.`);
+        }
+
+        // SUBMIT MECHANISMS SECURING THE PLATFORM WIZARD
+        function triggerEliteWizardSubmission() {
+            const email = document.getElementById('wizard-email-input').value;
+            if(!email || !email.includes('@')) {
+                alert('[SECURITY ALERT] Valid corporate security email parameters are required.');
+                return;
+            }
+            console.log('[ZERO-TRUST WIZARD] Gathering local simulator variables. Packaging encrypted state payload...');
+            alert('[SUCCESS] Infrastructure telemetry metrics successfully compiled.\nEncryption Layer: RSA-4096 enforced.\nOur core security engineering group will contact your operator node within 12 hours.');
+            document.getElementById('wizard-email-input').value = '';
+        }
+
+        // APPLICATION INITIAL BOOTSTRAP EXECUTOR
+        (function bootApplicationEngine() {
+            const currentHash = window.location.hash.replace('#/', '');
+            const validRoutes = ['home', 'capabilities', 'secteurs', 'about', 'faq'];
+            if (validRoutes.includes(currentHash)) {
+                navigateTo(currentHash);
+            } else {
+                navigateTo('home');
+            }
+            // Enforce explicit standard English default landing values
+            switchLanguageEngine('EN');
+            updateWasteSimulatorEngine();
+        })();
+    </script>
+
+</body>
+</html>
